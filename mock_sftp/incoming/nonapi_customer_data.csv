@@ -1,0 +1,10 @@
+ticket_id,customer_name,issue,status,priority,region,source_method,last_updated
+CON-2001,Continental,Door control module unresponsive on driver side,completed,high,North America,non_api,2026-04-19T23:06:34.647885+00:00
+CON-2002,Continental,Rain sensor calibration lost after windscreen replacement,in_progress,medium,Asia,non_api,2026-04-19T23:06:34.647919+00:00
+CON-2003,Continental,Instrument cluster display backlight failure,pending,low,North America,non_api,2026-04-19T23:06:34.647931+00:00
+CON-2004,Continental,Tyre pressure monitoring sensor fault,completed,medium,Europe,non_api,2026-04-19T23:06:34.647940+00:00
+CON-2005,Continental,Seatbelt pre-tensioner pyrotechnic fault,in_progress,medium,Asia,non_api,2026-04-19T23:06:34.647948+00:00
+CON-2006,Continental,USB hub communication timeout in infotainment,in_progress,medium,Europe,non_api,2026-04-19T23:06:34.647956+00:00
+CON-2007,Continental,Automatic emergency braking false activation,pending,medium,North America,non_api,2026-04-19T23:06:34.647965+00:00
+CON-2008,Continental,Lane departure warning camera calibration required,pending,low,North America,non_api,2026-04-19T23:06:34.647973+00:00
+CON-2009,Continental,Adaptive cruise control radar misalignment,in_progress,low,Europe,non_api,2026-04-19T23:06:34.647982+00:00

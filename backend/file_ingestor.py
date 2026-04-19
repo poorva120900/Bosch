@@ -1,44 +1,59 @@
 """
 file_ingestor.py — Flow 2 (Non-API / SFTP).
-Reads every CSV file dropped into mock_sftp/incoming/ and inserts rows into SQLite.
-Processed files are moved to mock_sftp/processed/ so they are not ingested twice.
-Run with:  python -m backend.file_ingestor
+Reads mock_sftp/incoming/nonapi_customer_data.csv (written by
+dummy_customer_csv.py) and stores the rows into SQLite. Old non_api
+records are cleared first so there are never duplicates.
+
+The CSV file is NOT moved after ingestion — dummy_customer_csv.py
+overwrites it fresh on every Refresh cycle.
+
+Run with:
+    python -m backend.file_ingestor
 """
 
-import os
-import shutil
 import pandas as pd
+from pathlib import Path
 from datetime import datetime, timezone
 from backend.database import get_connection, init_db
 
-# Watch this folder for incoming CSV files
-INCOMING_DIR = os.path.join(os.path.dirname(__file__), "..", "mock_sftp", "incoming")
-PROCESSED_DIR = os.path.join(os.path.dirname(__file__), "..", "mock_sftp", "processed")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CSV_PATH     = PROJECT_ROOT / "mock_sftp" / "incoming" / "nonapi_customer_data.csv"
+
+# Column name aliases — allow CSVs that use API-style field names
+COLUMN_ALIASES = {
+    "customer": "customer_name",
+    "subject":  "issue",
+}
+
+REQUIRED_COLS = {"ticket_id", "customer_name", "issue", "status", "priority"}
 
 
-def ensure_dirs():
-    """Make sure both incoming and processed directories exist."""
-    os.makedirs(INCOMING_DIR, exist_ok=True)
-    os.makedirs(PROCESSED_DIR, exist_ok=True)
+def ingest_csv(csv_path: Path) -> int:
+    """Read the CSV and insert its rows into SQLite. Returns the row count."""
+    print(f"[File Ingestor] Reading: {csv_path}")
+    df = pd.read_csv(csv_path)
 
-
-def ingest_csv(filepath):
-    """Read a single CSV file and insert its rows into SQLite."""
-    print(f"[File Ingestor] Reading file: {filepath}")
-    df = pd.read_csv(filepath)
-
-    # Normalise column names to lower-case with underscores
+    # Normalise column names: lower-case, spaces → underscores
     df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
 
-    required_cols = {"ticket_id", "customer_name", "issue", "status", "priority", "region"}
-    missing = required_cols - set(df.columns)
+    # Apply aliases so both 'customer'/'customer_name' and 'subject'/'issue' work
+    df.rename(columns=COLUMN_ALIASES, inplace=True)
+
+    missing = REQUIRED_COLS - set(df.columns)
     if missing:
-        print(f"[File Ingestor] Skipping {filepath} — missing columns: {missing}")
+        print(f"[File Ingestor] Skipping — missing columns: {missing}")
         return 0
+
+    # Provide defaults for optional columns
+    if "region"      not in df.columns:
+        df["region"] = "Unknown"
+    if "source_method" not in df.columns:
+        df["source_method"] = "non_api"
+    if "last_updated" not in df.columns:
+        df["last_updated"] = datetime.now(timezone.utc).isoformat()
 
     conn = get_connection()
     cursor = conn.cursor()
-    now = datetime.now(timezone.utc).isoformat()
 
     rows_inserted = 0
     for _, row in df.iterrows():
@@ -52,49 +67,38 @@ def ingest_csv(filepath):
             row["issue"],
             row["status"],
             row["priority"],
-            row["region"],
-            "non_api",   # source_method is always 'non_api' for this flow
-            now,
+            row.get("region", "Unknown"),
+            "non_api",
+            row.get("last_updated", datetime.now(timezone.utc).isoformat()),
         ))
         rows_inserted += 1
 
     conn.commit()
     conn.close()
-    print(f"[File Ingestor] Inserted {rows_inserted} rows from {os.path.basename(filepath)}.")
+    print(f"[File Ingestor] Inserted {rows_inserted} rows from {csv_path.name}.")
     return rows_inserted
 
 
-def move_to_processed(filepath):
-    """Move a processed CSV to the processed/ folder to avoid re-ingestion."""
-    filename = os.path.basename(filepath)
-    dest = os.path.join(PROCESSED_DIR, filename)
-    # Append timestamp if a file with the same name already exists in processed/
-    if os.path.exists(dest):
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        dest = os.path.join(PROCESSED_DIR, f"{ts}_{filename}")
-    shutil.move(filepath, dest)
-    print(f"[File Ingestor] Moved to processed: {dest}")
-
-
 def run():
-    """Main entry point: initialise DB, scan incoming/, ingest each CSV."""
+    """Main entry point: initialise DB, clear stale non_api rows, ingest CSV."""
     init_db()
-    ensure_dirs()
 
-    csv_files = [f for f in os.listdir(INCOMING_DIR) if f.lower().endswith(".csv")]
-
-    if not csv_files:
-        print(f"[File Ingestor] No CSV files found in {INCOMING_DIR}. Nothing to do.")
+    if not CSV_PATH.exists():
+        print(
+            f"[File Ingestor] No CSV found at {CSV_PATH}.\n"
+            "Run dummy_customer_csv.py first to generate the file."
+        )
         return
 
-    total = 0
-    for filename in csv_files:
-        filepath = os.path.join(INCOMING_DIR, filename)
-        count = ingest_csv(filepath)
-        total += count
-        move_to_processed(filepath)
+    # Clear previous non_api records so re-runs never produce duplicates
+    conn = get_connection()
+    conn.execute("DELETE FROM tickets WHERE source_method = 'non_api'")
+    conn.commit()
+    conn.close()
+    print("[File Ingestor] Cleared old non_api rows.")
 
-    print(f"[File Ingestor] Done. Total rows inserted: {total}")
+    ingest_csv(CSV_PATH)
+    print("[File Ingestor] Done.")
 
 
 if __name__ == "__main__":
