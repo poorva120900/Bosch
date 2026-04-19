@@ -1,0 +1,7 @@
+ticket_id,customer_name,issue,status,priority,region
+TKT-101,Omega Rentals,Steering angle sensor drift,pending,high,Europe
+TKT-102,Sigma Transports,Coolant temp sensor fault,completed,medium,North America
+TKT-103,Lambda Vehicles,Battery management system error,in_progress,critical,Asia
+TKT-104,Kappa Fleet,Exhaust pressure anomaly,pending,low,Europe
+TKT-105,Theta Autos,Parking sensor array failure,completed,medium,North America
+TKT-106,Eta Motors,Turbocharger boost control lost,pending,high,Asia

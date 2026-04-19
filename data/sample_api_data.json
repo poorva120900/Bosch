@@ -1,0 +1,50 @@
+[
+  {
+    "ticket_id": "TKT-001",
+    "customer_name": "Acme Corp",
+    "issue": "Engine sensor malfunction",
+    "status": "pending",
+    "priority": "high",
+    "region": "North America"
+  },
+  {
+    "ticket_id": "TKT-002",
+    "customer_name": "Beta Industries",
+    "issue": "Brake system alert",
+    "status": "completed",
+    "priority": "critical",
+    "region": "Europe"
+  },
+  {
+    "ticket_id": "TKT-003",
+    "customer_name": "Gamma Motors",
+    "issue": "Fuel injection error",
+    "status": "pending",
+    "priority": "medium",
+    "region": "Asia"
+  },
+  {
+    "ticket_id": "TKT-004",
+    "customer_name": "Delta Auto",
+    "issue": "ABS module failure",
+    "status": "in_progress",
+    "priority": "high",
+    "region": "Europe"
+  },
+  {
+    "ticket_id": "TKT-005",
+    "customer_name": "Epsilon Fleet",
+    "issue": "Transmission control unit issue",
+    "status": "completed",
+    "priority": "low",
+    "region": "North America"
+  },
+  {
+    "ticket_id": "TKT-006",
+    "customer_name": "Zeta Logistics",
+    "issue": "Dashboard ECU reboot loop",
+    "status": "pending",
+    "priority": "critical",
+    "region": "Asia"
+  }
+]
