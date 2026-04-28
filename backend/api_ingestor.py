@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from backend.database import get_connection, init_db
 
 # URL of the Siemens AG SAP Ariba simulator started by dummy_customer_api.py
-API_URL = "http://127.0.0.1:8001/tickets"
+API_URL = "http://127.0.0.1:8000/tickets"
 
 
 def fetch_tickets_from_api():
