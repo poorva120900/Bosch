@@ -1,0 +1,6 @@
+ticket_id,customer,subject,status,priority,source_method,last_updated
+TKT-7697,Continental,[Part Shortage] storage problem,open,high,non_api,2026-04-28T22:20:08.141271+00:00
+TKT-4293,Continental,[Part Shortage] new,open,high,non_api,2026-04-28T22:20:50.361387+00:00
+TKT-2869,Continental,[Quality Complaint] new,open,medium,non_api,2026-04-29T00:31:25.156613+00:00
+TKT-1309,Continental,[Delivery Delay] issue,open,low,non_api,2026-04-29T00:32:51.030379+00:00
+TKT-8371,Continental,[Quality Complaint] trial8,open,low,non_api,2026-04-29T00:51:33.170060+00:00

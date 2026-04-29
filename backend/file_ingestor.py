@@ -1,11 +1,12 @@
 """
 file_ingestor.py — Flow 2 (Non-API / SFTP).
-Reads mock_sftp/incoming/nonapi_customer_data.csv (written by
-dummy_customer_csv.py) and stores the rows into SQLite. Old non_api
-records are cleared first so there are never duplicates.
+Reads mock_sftp/incoming/continental_tickets.csv (written by
+continental_portal.py when Continental submits a ticket) and stores
+the rows into SQLite. Old non_api records are cleared first so there
+are never duplicates.
 
-The CSV file is NOT moved after ingestion — dummy_customer_csv.py
-overwrites it fresh on every Refresh cycle.
+The CSV file is NOT moved after ingestion — it accumulates rows as
+Continental submits new tickets through their portal.
 
 Run with:
     python -m backend.file_ingestor
@@ -17,7 +18,7 @@ from datetime import datetime, timezone
 from backend.database import get_connection, init_db
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CSV_PATH     = PROJECT_ROOT / "mock_sftp" / "incoming" / "nonapi_customer_data.csv"
+CSV_PATH     = PROJECT_ROOT / "mock_sftp" / "incoming" / "continental_tickets.csv"
 
 # Column name aliases — allow CSVs that use API-style field names
 COLUMN_ALIASES = {

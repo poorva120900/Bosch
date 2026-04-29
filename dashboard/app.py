@@ -4,11 +4,20 @@ Reads exclusively from SQLite. Refreshes on every page interaction.
 Run with:  streamlit run dashboard/app.py
 """
 
+import sys
 import sqlite3
 import os
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+
+# Make sure the project root (bosch_dashboard/) is on sys.path so the
+# backend package is importable even when Streamlit is launched from a
+# different working directory.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from backend.api_ingestor import run as run_api_ingestor    # Flow 1: API → SQLite
+from backend.file_ingestor import run as run_file_ingestor  # Flow 2: CSV/SFTP → SQLite
 
 # ── Path to the shared database ──────────────────────────────────────────────
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "bosch_tickets.db")
@@ -27,9 +36,17 @@ st.caption("Data source: SQLite  |  Flows: API + Non-API (CSV/SFTP)")
 # ── Data loading ─────────────────────────────────────────────────────────────
 @st.cache_data(ttl=10)  # re-query every 10 seconds so new ingestions show up
 def load_data():
-    """Pull all rows from the tickets table into a DataFrame."""
+    """Sync the SFTP CSV into SQLite, then pull all rows into a DataFrame.
+    Running the file ingestor here means every cache cycle (10 s) automatically
+    picks up new Continental tickets — no Refresh button required."""
+    # Always sync the SFTP file first so SQLite is up to date
+    try:
+        run_file_ingestor()
+    except Exception:
+        pass  # missing CSV is fine — ingestor prints a message and returns
+
     if not os.path.exists(DB_PATH):
-        return pd.DataFrame()   # return empty frame if DB hasn't been created yet
+        return pd.DataFrame()
 
     conn = sqlite3.connect(DB_PATH)
     df = pd.read_sql_query("SELECT * FROM tickets ORDER BY last_updated DESC", conn)
@@ -178,5 +195,17 @@ st.dataframe(
 
 # ── Manual refresh button ─────────────────────────────────────────────────────
 if st.button("Refresh Data"):
+    # Pull latest tickets from both sources before re-querying the database.
+    # API ingestor is wrapped in try/except so a stopped API server doesn't
+    # block the file/SFTP flow from completing.
+    with st.spinner("Ingesting latest data from all sources..."):
+        try:
+            run_api_ingestor()
+        except Exception as exc:
+            st.warning(f"API ingestor skipped — server may not be running. ({exc})")
+        try:
+            run_file_ingestor()
+        except Exception as exc:
+            st.warning(f"File ingestor error: {exc}")
     st.cache_data.clear()
     st.rerun()
