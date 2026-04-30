@@ -150,3 +150,23 @@ To reset the entire database:
 ```bash
 python -c "from backend.database import clear_table; clear_table()"
 ```
+
+---
+
+## GitHub Deployment
+
+This repository now supports two GitHub-based deployment paths:
+
+### 1) Streamlit Cloud live app
+
+Deploy `streamlit_app.py` as the main file. It exposes all three dashboards in one app using Streamlit's multi-page navigation:
+
+- `dashboard/app.py` - Bosch ticket dashboard
+- `dashboard/customer_portal.py` - Siemens supplier portal
+- `dashboard/continental_portal.py` - Continental supplier portal
+
+### 2) GitHub Pages static landing page
+
+The repo also includes `index.html`, a static landing page that introduces the three dashboards and explains how the live app is structured.
+
+If you use GitHub Pages, publish the repository root so `index.html` becomes the site entry point.
