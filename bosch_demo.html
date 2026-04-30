@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bosch × SAP Ariba — Integration Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #080d16;
+      --bg2:    #0e1525;
+      --teal:   #14b8a6;
+      --orange: #F59E0B;
+      --purple: #818cf8;
+      --text:   #e2e8f0;
+      --dim:    #a1b0c7;
+      --border: rgba(255,255,255,0.09);
+      --topbar-h: 60px;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--topbar-h);
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      z-index: 100;
+    }
+
+    .brand {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      color: var(--teal);
+      white-space: nowrap;
+      flex-shrink: 0;
+      letter-spacing: 0.02em;
+    }
+
+    #nav-title {
+      flex: 1;
+      text-align: center;
+      font-size: 13px;
+      color: var(--dim);
+      font-weight: 400;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    #nav-buttons { display: flex; gap: 4px; }
+
+    .nav-btn {
+      padding: 5px 11px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--dim);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.18s, color 0.18s, background 0.18s;
+      white-space: nowrap;
+    }
+    .nav-btn:hover  { border-color: var(--teal); color: var(--teal); }
+    .nav-btn.active { background: rgba(20,184,166,0.12); border-color: var(--teal); color: var(--teal); }
+
+    .scene-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--dim);
+      padding-left: 12px;
+      border-left: 1px solid var(--border);
+      margin-left: 4px;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    #main {
+      position: fixed;
+      top: var(--topbar-h);
+      left: 0; right: 0; bottom: 0;
+      display: flex;
+    }
+
+    /* ── LEFT PANEL ── */
+    #scene-left {
+      width: 320px;
+      flex-shrink: 0;
+      padding: 36px 28px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      background: var(--bg2);
+    }
+    #scene-left::-webkit-scrollbar { width: 4px; }
+    #scene-left::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .scene-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--teal);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+
+    .scene-heading {
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px;
+      line-height: 1.35;
+      color: var(--text);
+    }
+
+    .scene-description {
+      font-size: 13.5px;
+      line-height: 1.75;
+      color: var(--dim);
+    }
+
+    /* ── METRIC CARDS ── */
+    .metrics-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .metric-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .metric-label {
+      font-size: 10px;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-weight: 500;
+    }
+
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .metric-value.teal   { color: var(--teal); }
+    .metric-value.orange { color: var(--orange); }
+    .metric-value.purple { color: var(--purple); }
+
+    /* ── CANVAS PANEL ── */
+    #scene-right {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    #main-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     TOP NAVIGATION BAR
+══════════════════════════════════════ -->
+<nav id="topbar">
+  <div class="brand">Bosch × SAP Ariba</div>
+  <div id="nav-title"></div>
+  <div class="nav-right">
+    <div id="nav-buttons"></div>
+    <div class="scene-counter" id="scene-counter"></div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════ -->
+<main id="main">
+  <div id="scene-left">
+    <div class="scene-label"  id="scene-label"></div>
+    <h1  class="scene-heading" id="scene-heading"></h1>
+    <p   class="scene-description" id="scene-description"></p>
+    <div class="metrics-grid" id="metrics-grid"></div>
+  </div>
+  <div id="scene-right">
+    <canvas id="main-canvas"></canvas>
+  </div>
+</main>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════
+   SCENE DEFINITIONS
+═══════════════════════════════════════════════════════════ */
+const SCENES = [
+  {
+    label: 'The Problem',
+    title: 'Manual ticket retrieval is breaking down',
+    description: 'Bosch teams manually log into each customer portal to check for tickets. Two-factor authentication is now breaking the bots that tried to automate this.',
+    metrics: [
+      { label: 'Manual Logins Per Day', value: '47',      color: 'orange' },
+      { label: 'Time Wasted',           value: '3.2 hrs', color: 'orange' },
+      { label: 'Error Rate',            value: '18%',     color: 'orange' }
+    ],
+    animate: animateScene1
+  },
+  {
+    label: 'Our Solution',
+    title: 'Two paths. One dashboard.',
+    description: 'Customers with API access connect directly. Customers without API access use a secure file drop. Both feed into one Bosch dashboard automatically.',
+    metrics: [
+      { label: 'API Customers',  value: '1',    color: 'teal'   },
+      { label: 'SFTP Customers', value: '1',    color: 'orange' },
+      { label: 'Auto-ingested',  value: '100%', color: 'purple' }
+    ],
+    animate: animateScene2
+  },
+  {
+    label: 'API Flow',
+    title: 'Direct REST API integration',
+    description: 'The customer shares an API key. Bosch polls their SAP Ariba system every 15 minutes and fetches new tickets automatically.',
+    metrics: [
+      { label: 'Poll Interval',  value: '15 min',  color: 'teal' },
+      { label: 'Auth',           value: 'API Key', color: 'teal' },
+      { label: 'Tickets Today',  value: '6',       color: 'teal' }
+    ],
+    animate: animateScene3
+  },
+  {
+    label: 'SFTP Flow',
+    title: 'Secure file drop — no API needed',
+    description: 'The customer configures a one-time Ariba export. Files drop automatically into a Bosch-provisioned secure folder. No passwords, no 2FA friction.',
+    metrics: [
+      { label: 'Setup',      value: 'One-time',    color: 'orange' },
+      { label: 'Auth',       value: 'SSH Key + IP', color: 'orange' },
+      { label: 'Encryption', value: 'PGP',         color: 'orange' }
+    ],
+    animate: animateScene4
+  },
+  {
+    label: 'Live Dashboard',
+    title: 'One view — all tickets, both sources',
+    description: 'The Bosch team sees every ticket in one place, tagged by source. Press refresh and both flows update instantly.',
+    metrics: [
+      { label: 'Customers',    value: '2',    color: 'purple' },
+      { label: 'Refresh',      value: 'Auto', color: 'teal'   },
+      { label: 'Data Sources', value: '2',    color: 'purple' }
+    ],
+    animate: animateScene5
+  }
+];
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL ANIMATION STATE
+═══════════════════════════════════════════════════════════ */
+let currentSceneIdx = 0;
+let animFrameId    = null;
+let sceneState     = {};          // replaced on every scene switch
+
+const canvas = document.getElementById('main-canvas');
+const ctx    = canvas.getContext('2d');
+
+/* ═══════════════════════════════════════════════════════════
+   CANVAS RESIZE
+═══════════════════════════════════════════════════════════ */
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width  = r.width;
+  canvas.height = r.height;
+}
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  // restart current scene so it recalculates layout
+  navigateTo(currentSceneIdx);
+});
+
+/* ═══════════════════════════════════════════════════════════
+   BUILD NAV BUTTONS
+═══════════════════════════════════════════════════════════ */
+const navButtonsEl = document.getElementById('nav-buttons');
+SCENES.forEach((s, i) => {
+  const btn = document.createElement('button');
+  btn.className   = 'nav-btn';
+  btn.textContent = s.label;
+  btn.onclick     = () => navigateTo(i);
+  navButtonsEl.appendChild(btn);
+});
+
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATE TO SCENE
+═══════════════════════════════════════════════════════════ */
+function navigateTo(idx) {
+  // stop any running animation safely via the stopped flag
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  sceneState.stopped = true;
+  sceneState = {};
+
+  currentSceneIdx = idx;
+  const scene = SCENES[idx];
+
+  // topbar
+  document.getElementById('nav-title').textContent    = scene.title;
+  document.getElementById('scene-counter').textContent = `${idx + 1} / ${SCENES.length}`;
+  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+
+  // left panel
+  document.getElementById('scene-label').textContent       = scene.label;
+  document.getElementById('scene-heading').textContent     = scene.title;
+  document.getElementById('scene-description').textContent = scene.description;
+
+  // metric cards
+  const grid = document.getElementById('metrics-grid');
+  grid.innerHTML = '';
+  scene.metrics.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'metric-card';
+    card.innerHTML = `<div class="metric-label">${m.label}</div>
+                      <div class="metric-value ${m.color}">${m.value}</div>`;
+    grid.appendChild(card);
+  });
+
+  // start animation
+  resizeCanvas();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  scene.animate(canvas, ctx, sceneState);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SHARED DRAWING UTILITIES
+═══════════════════════════════════════════════════════════ */
+
+// Rounded rectangle path (no fill/stroke — caller decides)
+function roundRect(cx, cy, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(cx + r, cy);
+  ctx.lineTo(cx + w - r, cy);
+  ctx.quadraticCurveTo(cx + w, cy, cx + w, cy + r);
+  ctx.lineTo(cx + w, cy + h - r);
+  ctx.quadraticCurveTo(cx + w, cy + h, cx + w - r, cy + h);
+  ctx.lineTo(cx + r, cy + h);
+  ctx.quadraticCurveTo(cx, cy + h, cx, cy + h - r);
+  ctx.lineTo(cx, cy + r);
+  ctx.quadraticCurveTo(cx, cy, cx + r, cy);
+  ctx.closePath();
+}
+
+// Draw a labelled pipeline node box, centred at (x, y)
+function drawNode(x, y, w, h, label, color, subLabel) {
+  ctx.save();
+  roundRect(x - w / 2, y - h / 2, w, h, 8);
+  ctx.fillStyle   = '#0e1525';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle    = '#e2e8f0';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  if (subLabel) {
+    ctx.font = "500 12px 'DM Sans', sans-serif";
+    ctx.fillText(label, x, y - 7);
+    ctx.fillStyle = color;
+    ctx.font = "11px 'JetBrains Mono', monospace";
+    ctx.fillText(subLabel, x, y + 8);
+  } else {
+    ctx.font = "500 12px 'DM Sans', sans-serif";
+    ctx.fillText(label, x, y);
+  }
+  ctx.restore();
+}
+
+// Two-line node (split label on '\n')
+function drawNode2(x, y, w, h, label, color) {
+  const lines = label.split('\n');
+  ctx.save();
+  roundRect(x - w / 2, y - h / 2, w, h, 8);
+  ctx.fillStyle   = '#0e1525';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle    = '#e2e8f0';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = "500 11px 'DM Sans', sans-serif";
+  if (lines.length === 1) {
+    ctx.fillText(lines[0], x, y);
+  } else {
+    ctx.fillText(lines[0], x, y - 8);
+    ctx.fillText(lines[1], x, y + 8);
+  }
+  ctx.restore();
+}
+
+// Arrowhead pointing toward (x2, y2)
+function drawArrow(x1, y1, x2, y2, color) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const s = 7;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - s * Math.cos(angle - Math.PI / 6), y2 - s * Math.sin(angle - Math.PI / 6));
+  ctx.lineTo(x2 - s * Math.cos(angle + Math.PI / 6), y2 - s * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// Point on a cubic bezier at parameter t
+function bezierPt(p0, p1, p2, p3, t) {
+  const u = 1 - t;
+  return {
+    x: u*u*u*p0.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*p3.x,
+    y: u*u*u*p0.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*p3.y
+  };
+}
+
+// Glowing dot packet
+function drawPacket(x, y, color, r) {
+  r = r || 5;
+  ctx.save();
+  // core
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  // halo
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.4);
+  g.addColorStop(0, color + 'aa');
+  g.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(x, y, r * 2.4, 0, Math.PI * 2);
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.restore();
+}
+
+// Stick figure, centred at (cx, cy)
+function drawStickFigure(cx, cy, color) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = 2;
+  ctx.lineCap     = 'round';
+
+  // head
+  ctx.beginPath(); ctx.arc(cx, cy - 28, 11, 0, Math.PI * 2); ctx.stroke();
+  // body
+  ctx.beginPath(); ctx.moveTo(cx, cy - 17); ctx.lineTo(cx, cy + 12); ctx.stroke();
+  // arms
+  ctx.beginPath(); ctx.moveTo(cx - 20, cy - 6); ctx.lineTo(cx, cy + 0); ctx.lineTo(cx + 20, cy - 6); ctx.stroke();
+  // legs
+  ctx.beginPath(); ctx.moveTo(cx, cy + 12); ctx.lineTo(cx - 15, cy + 32); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy + 12); ctx.lineTo(cx + 15, cy + 32); ctx.stroke();
+
+  ctx.restore();
+}
+
+// Warning triangle (flashing), centred at (cx, cy)
+function drawWarning(cx, cy, opacity) {
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  const s = 13;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - s);
+  ctx.lineTo(cx + s * 0.87, cy + s * 0.5);
+  ctx.lineTo(cx - s * 0.87, cy + s * 0.5);
+  ctx.closePath();
+  ctx.fillStyle   = 'rgba(251,191,36,0.18)';
+  ctx.fill();
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth   = 1.5;
+  ctx.stroke();
+  ctx.fillStyle    = '#fbbf24';
+  ctx.font         = "bold 10px 'DM Sans', sans-serif";
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('!', cx, cy + 2);
+  ctx.restore();
+}
+
+// Rotating clock icon
+function drawClock(cx, cy, angle) {
+  ctx.save();
+  ctx.strokeStyle = '#14b8a6';
+  ctx.lineWidth   = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.stroke();
+  // hour hand
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + 7 * Math.cos(angle - Math.PI / 2), cy + 7 * Math.sin(angle - Math.PI / 2));
+  ctx.stroke();
+  // minute hand (faster)
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + 10 * Math.cos(angle * 12 - Math.PI / 2), cy + 10 * Math.sin(angle * 12 - Math.PI / 2));
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Lock icon; glows green when active
+function drawLock(cx, cy, active) {
+  ctx.save();
+  const col = active ? '#22d3ee' : '#14b8a6';
+  if (active) {
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 22);
+    g.addColorStop(0, 'rgba(34,211,238,0.28)');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.strokeStyle = col;
+  ctx.lineWidth   = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy - 3, 6, Math.PI, 0);
+  ctx.stroke();
+  roundRect(cx - 8, cy + 1, 16, 12, 2);
+  ctx.fillStyle = 'rgba(14,21,37,0.9)';
+  ctx.fill();
+  ctx.strokeStyle = col;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// File drop icon
+function drawFileIcon(cx, cy, opacity) {
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.strokeStyle = '#F59E0B';
+  ctx.lineWidth   = 1.5;
+  ctx.fillStyle   = 'rgba(245,158,11,0.12)';
+  const w = 12, h = 16;
+  ctx.beginPath();
+  ctx.moveTo(cx - w/2, cy - h/2);
+  ctx.lineTo(cx + w/2 - 4, cy - h/2);
+  ctx.lineTo(cx + w/2,     cy - h/2 + 4);
+  ctx.lineTo(cx + w/2,     cy + h/2);
+  ctx.lineTo(cx - w/2,     cy + h/2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // dog-ear
+  ctx.beginPath();
+  ctx.moveTo(cx + w/2 - 4, cy - h/2);
+  ctx.lineTo(cx + w/2 - 4, cy - h/2 + 4);
+  ctx.lineTo(cx + w/2,     cy - h/2 + 4);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Shield icon (pulsing green)
+function drawShield(cx, cy, opacity) {
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.strokeStyle = '#22c55e';
+  ctx.lineWidth   = 1.5;
+  ctx.fillStyle   = 'rgba(34,197,94,0.12)';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 13);
+  ctx.lineTo(cx + 10, cy - 7);
+  ctx.lineTo(cx + 10, cy + 3);
+  ctx.quadraticCurveTo(cx + 10, cy + 13, cx, cy + 15);
+  ctx.quadraticCurveTo(cx - 10, cy + 13, cx - 10, cy + 3);
+  ctx.lineTo(cx - 10, cy - 7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // checkmark
+  ctx.strokeStyle = '#22c55e';
+  ctx.lineWidth   = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(cx - 4, cy + 1);
+  ctx.lineTo(cx - 1, cy + 4);
+  ctx.lineTo(cx + 5, cy - 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCENE 1 — THE PROBLEM
+   Three portal nodes → red dashed arrows → stick figure
+═══════════════════════════════════════════════════════════ */
+function animateScene1(cv, ct, state) {
+  state.t    = 0;
+  state.dash = 0;
+
+  function draw() {
+    if (state.stopped) return;
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    state.t    += 0.016;
+    state.dash  = (state.dash + 0.7) % 28;
+
+    const portals = [
+      { name: 'Siemens AG Portal',  x: W * 0.18, y: H * 0.26 },
+      { name: 'Continental Portal', x: W * 0.18, y: H * 0.50 },
+      { name: 'ZF Group Portal',    x: W * 0.18, y: H * 0.74 }
+    ];
+    const px = W * 0.64, py = H * 0.50;
+
+    // Portal nodes
+    portals.forEach(p => drawNode(p.x, p.y, 148, 44, p.name, '#818cf8'));
+
+    // "Bosch Team" label above figure
+    ctx.save();
+    ctx.fillStyle    = '#a1b0c7';
+    ctx.font         = "13px 'DM Sans', sans-serif";
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Bosch Team', px, py - 58);
+    ctx.restore();
+
+    // Stick figure
+    drawStickFigure(px, py + 8, '#e2e8f0');
+
+    // Dashed arrows + warnings
+    portals.forEach((p, i) => {
+      const fx = p.x + 74, fy = p.y;
+      const tx = px - 24,  ty = py + 8;
+
+      // dashed line
+      ctx.save();
+      ctx.strokeStyle    = '#f87171';
+      ctx.lineWidth      = 1.5;
+      ctx.setLineDash([8, 6]);
+      ctx.lineDashOffset = -state.dash;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // arrowhead
+      drawArrow(fx, fy, tx, ty, '#f87171');
+
+      // flashing warning triangle mid-arrow
+      const mx = (fx + tx) / 2;
+      const my = (fy + ty) / 2 - 20;
+      const alpha = 0.4 + 0.6 * Math.abs(Math.sin(state.t * 2.5 + i * 1.8));
+      drawWarning(mx, my, alpha);
+    });
+
+    animFrameId = requestAnimationFrame(draw);
+  }
+  animFrameId = requestAnimationFrame(draw);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCENE 2 — OUR SOLUTION
+   Two sources → Bosch DB → Dashboard, animated bezier packets
+═══════════════════════════════════════════════════════════ */
+function animateScene2(cv, ct, state) {
+  state.t         = 0;
+  state.particles = [];
+  state.lastSpawn = -2;
+
+  // Control points for curved bezier paths
+  function paths(W, H) {
+    const sie  = { x: W * 0.14, y: H * 0.33 };
+    const con  = { x: W * 0.14, y: H * 0.67 };
+    const db   = { x: W * 0.52, y: H * 0.50 };
+    const dash = { x: W * 0.82, y: H * 0.50 };
+    const midX = (sie.x + db.x) / 2;
+    return {
+      sie, con, db, dash,
+      // bezier control points
+      sieCP1: { x: midX, y: sie.y },
+      sieCP2: { x: midX, y: db.y  },
+      conCP1: { x: midX, y: con.y },
+      conCP2: { x: midX, y: db.y  }
+    };
+  }
+
+  function draw() {
+    if (state.stopped) return;
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    state.t += 0.016;
+
+    const p = paths(W, H);
+    const sieR = 65, conR = 65, dbR = 60, dashR = 60;
+
+    // Static path lines (dim)
+    function bezierStroke(c1, cp1, cp2, c2, col) {
+      ctx.save();
+      ctx.strokeStyle = col;
+      ctx.lineWidth   = 2;
+      ctx.beginPath();
+      ctx.moveTo(c1.x + sieR, c1.y);
+      ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, c2.x - dbR, c2.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+    bezierStroke(p.sie, p.sieCP1, p.sieCP2, p.db, 'rgba(20,184,166,0.18)');
+    bezierStroke(p.con, p.conCP1, p.conCP2, p.db, 'rgba(245,158,11,0.18)');
+
+    // DB → Dashboard straight line
+    ctx.save();
+    ctx.strokeStyle = 'rgba(129,140,248,0.18)';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(p.db.x + dbR, p.db.y);
+    ctx.lineTo(p.dash.x - dashR, p.dash.y);
+    ctx.stroke();
+    ctx.restore();
+
+    // Nodes
+    drawNode(p.sie.x,  p.sie.y,  130, 48, 'Siemens AG',  '#14b8a6', 'API');
+    drawNode(p.con.x,  p.con.y,  130, 48, 'Continental', '#F59E0B', 'SFTP');
+    drawNode(p.db.x,   p.db.y,   120, 48, 'Bosch DB',    '#818cf8');
+    drawNode(p.dash.x, p.dash.y, 120, 48, 'Dashboard',   '#14b8a6');
+
+    // Spawn a new particle roughly every 0.9 s
+    if (state.t - state.lastSpawn > 0.9) {
+      state.particles.push({ src: Math.random() < 0.5 ? 'api' : 'sftp', t: 0 });
+      state.lastSpawn = state.t;
+    }
+
+    // Update & draw particles
+    state.particles = state.particles.filter(pk => pk.t < 2.0);
+    state.particles.forEach(pk => {
+      pk.t += 0.004;
+      let pos, color;
+
+      if (pk.t <= 1.0) {
+        // Phase 1: source → Bosch DB
+        const t = pk.t;
+        color = pk.src === 'api' ? '#14b8a6' : '#F59E0B';
+        const c1  = pk.src === 'api' ? p.sie : p.con;
+        const cp1 = pk.src === 'api' ? p.sieCP1 : p.conCP1;
+        const cp2 = pk.src === 'api' ? p.sieCP2 : p.conCP2;
+        pos = bezierPt(
+          { x: c1.x + sieR, y: c1.y },
+          cp1, cp2,
+          { x: p.db.x - dbR, y: p.db.y },
+          t
+        );
+      } else {
+        // Phase 2: Bosch DB → Dashboard (straight)
+        color = '#818cf8';
+        const t = pk.t - 1.0;
+        const x1 = p.db.x + dbR, x2 = p.dash.x - dashR;
+        pos = { x: x1 + (x2 - x1) * t, y: p.db.y };
+      }
+      drawPacket(pos.x, pos.y, color);
+    });
+
+    animFrameId = requestAnimationFrame(draw);
+  }
+  animFrameId = requestAnimationFrame(draw);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCENE 3 — API FLOW
+   Horizontal 5-node pipeline, teal packets, clock + lock icons
+═══════════════════════════════════════════════════════════ */
+function animateScene3(cv, ct, state) {
+  state.t          = 0;
+  state.packets    = [];
+  state.clockAngle = 0;
+  state.lastSpawn  = -2;
+
+  function draw() {
+    if (state.stopped) return;
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    state.t          += 0.016;
+    state.clockAngle += 0.018;
+
+    const cy  = H * 0.50;
+    const nW  = 110, nH = 50;
+    const hw  = nW / 2;
+    const nodes = [
+      { label: 'Siemens AG\nAriba',    x: W * 0.10 },
+      { label: 'API Key\nAuth',         x: W * 0.30 },
+      { label: 'Bosch\nScheduler',      x: W * 0.50 },
+      { label: 'SQLite\nDB',            x: W * 0.70 },
+      { label: 'Dashboard',             x: W * 0.88 }
+    ];
+
+    // Connector lines
+    for (let i = 0; i < nodes.length - 1; i++) {
+      const x1 = nodes[i].x + hw, x2 = nodes[i+1].x - hw;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(20,184,166,0.18)';
+      ctx.lineWidth   = 2;
+      ctx.beginPath(); ctx.moveTo(x1, cy); ctx.lineTo(x2, cy); ctx.stroke();
+      ctx.restore();
+      drawArrow(x1 + 2, cy, x2 - 2, cy, 'rgba(20,184,166,0.45)');
+    }
+
+    // Nodes
+    nodes.forEach(n => drawNode2(n.x, cy, nW, nH, n.label, '#14b8a6'));
+
+    // Clock above "Bosch Scheduler" (index 2)
+    drawClock(nodes[2].x, cy - nH / 2 - 22, state.clockAngle);
+
+    // Lock above "API Key Auth" (index 1)
+    const nearAuth = state.packets.some(pk => {
+      const seg = pk.t * (nodes.length - 1);
+      return Math.floor(seg) === 0 && (seg - Math.floor(seg)) > 0.6;
+    });
+    drawLock(nodes[1].x, cy - nH / 2 - 22, nearAuth);
+
+    // Spawn packet every ~1.4 s
+    if (state.t - state.lastSpawn > 1.4) {
+      state.packets.push({ t: 0 });
+      state.lastSpawn = state.t;
+    }
+
+    // Draw packets
+    state.packets = state.packets.filter(pk => pk.t < 1.0);
+    state.packets.forEach(pk => {
+      pk.t += 0.0028;
+      const segs   = nodes.length - 1;
+      const segT   = pk.t * segs;
+      const segIdx = Math.min(Math.floor(segT), segs - 1);
+      const local  = segT - segIdx;
+      const x1     = nodes[segIdx].x + hw;
+      const x2     = nodes[segIdx + 1].x - hw;
+      drawPacket(x1 + (x2 - x1) * local, cy, '#14b8a6');
+    });
+
+    animFrameId = requestAnimationFrame(draw);
+  }
+  animFrameId = requestAnimationFrame(draw);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCENE 4 — SFTP FLOW
+   6-node pipeline, orange packets, file-drop + shield icons
+═══════════════════════════════════════════════════════════ */
+function animateScene4(cv, ct, state) {
+  state.t           = 0;
+  state.packets     = [];
+  state.lastSpawn   = -2;
+  state.shieldPhase = 0;
+  state.fileDrops   = [];   // each: { life: 0..1 }
+
+  function draw() {
+    if (state.stopped) return;
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    state.t           += 0.016;
+    state.shieldPhase  = (state.shieldPhase + 0.045) % (Math.PI * 2);
+
+    const cy = H * 0.50;
+    const nW = 100, nH = 50;
+    const hw = nW / 2;
+    const nodes = [
+      { label: 'Continental\nAriba', x: W * 0.08 },
+      { label: 'Auto\nExport',       x: W * 0.24 },
+      { label: 'SFTP\nFolder',       x: W * 0.42 },
+      { label: 'File\nWatcher',      x: W * 0.58 },
+      { label: 'SQLite\nDB',         x: W * 0.74 },
+      { label: 'Dashboard',          x: W * 0.91 }
+    ];
+
+    // Connector lines
+    for (let i = 0; i < nodes.length - 1; i++) {
+      const x1 = nodes[i].x + hw, x2 = nodes[i+1].x - hw;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(245,158,11,0.18)';
+      ctx.lineWidth   = 2;
+      ctx.beginPath(); ctx.moveTo(x1, cy); ctx.lineTo(x2, cy); ctx.stroke();
+      ctx.restore();
+      drawArrow(x1 + 2, cy, x2 - 2, cy, 'rgba(245,158,11,0.45)');
+    }
+
+    // Nodes
+    nodes.forEach(n => drawNode2(n.x, cy, nW, nH, n.label, '#F59E0B'));
+
+    // SFTP folder (index 2) decorations
+    const sftpX = nodes[2].x;
+    const iconY = cy - nH / 2 - 26;
+
+    // Shield pulsing
+    const shieldAlpha = 0.55 + 0.45 * Math.sin(state.shieldPhase);
+    drawShield(sftpX + 18, iconY, shieldAlpha);
+
+    // File drop animation
+    state.fileDrops = state.fileDrops.filter(f => f.life < 1.0);
+    state.fileDrops.forEach(f => {
+      f.life += 0.022;
+      // simple bounce: drops in and bounces up slightly
+      const bounce = Math.abs(Math.sin(f.life * Math.PI)) * 14 * (1 - f.life);
+      const opacity = Math.max(0, 1 - f.life * 0.8);
+      drawFileIcon(sftpX - 16, iconY - bounce, opacity);
+    });
+    if (state.fileDrops.length === 0) {
+      state.fileDrops.push({ life: 0 });
+    }
+
+    // Spawn packets
+    if (state.t - state.lastSpawn > 1.2) {
+      state.packets.push({ t: 0, triggered: false });
+      state.lastSpawn = state.t;
+    }
+
+    // Draw packets
+    state.packets = state.packets.filter(pk => pk.t < 1.0);
+    state.packets.forEach(pk => {
+      pk.t += 0.0025;
+      const segs   = nodes.length - 1;
+      const segT   = pk.t * segs;
+      const segIdx = Math.min(Math.floor(segT), segs - 1);
+      const local  = segT - segIdx;
+
+      // Trigger file-drop icon when packet arrives at SFTP node (seg 1→2)
+      if (segIdx === 1 && local > 0.85 && !pk.triggered) {
+        pk.triggered = true;
+        state.fileDrops.push({ life: 0 });
+      }
+
+      const x1 = nodes[segIdx].x + hw;
+      const x2 = nodes[segIdx + 1].x - hw;
+      drawPacket(x1 + (x2 - x1) * local, cy, '#F59E0B');
+    });
+
+    animFrameId = requestAnimationFrame(draw);
+  }
+  animFrameId = requestAnimationFrame(draw);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCENE 5 — LIVE DASHBOARD
+   Dark panel with metric tiles, ticket table, sliding new rows
+═══════════════════════════════════════════════════════════ */
+const TICKET_POOL = [
+  { id: 'ARB-2041', customer: 'Siemens AG',   subject: 'PO #4821 — Invoice Discrepancy',       status: 'Open',      src: 'API'  },
+  { id: 'ARB-2039', customer: 'Continental',  subject: 'Delivery Delay — Order 9910',           status: 'In Review', src: 'SFTP' },
+  { id: 'ARB-2035', customer: 'Siemens AG',   subject: 'Contract Renewal Q3',                   status: 'Closed',    src: 'API'  },
+  { id: 'ARB-2031', customer: 'Continental',  subject: 'Customs Form Missing — Shipment 772',   status: 'Open',      src: 'SFTP' },
+  { id: 'ARB-2028', customer: 'Siemens AG',   subject: 'Pricing Amendment Request',             status: 'Open',      src: 'API'  },
+  { id: 'ARB-2024', customer: 'Continental',  subject: 'Quality Report — Batch 55A',            status: 'In Review', src: 'SFTP' },
+  { id: 'ARB-2019', customer: 'Siemens AG',   subject: 'NDA Update Required',                   status: 'Closed',    src: 'API'  },
+  { id: 'ARB-2016', customer: 'Continental',  subject: 'INCO Terms Clarification — Lot 119',   status: 'Open',      src: 'SFTP' }
+];
+
+function animateScene5(cv, ct, state) {
+  state.t            = 0;
+  state.pulsePhase   = 0;
+  state.lastTicket   = 0;
+  state.rows         = TICKET_POOL.slice(0, 4);
+  state.poolIdx      = 4;
+  state.slideIn      = null;
+  state.slideProgress = 0;
+
+  function draw() {
+    if (state.stopped) return;
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    state.t          += 0.016;
+    state.pulsePhase  = (state.pulsePhase + 0.055) % (Math.PI * 2);
+
+    // Schedule next ticket slide-in every 4 s
+    if (state.t - state.lastTicket > 4.0 && !state.slideIn) {
+      state.slideIn      = TICKET_POOL[state.poolIdx % TICKET_POOL.length];
+      state.poolIdx++;
+      state.slideProgress = 0;
+      state.lastTicket   = state.t;
+    }
+    if (state.slideIn) {
+      state.slideProgress = Math.min(state.slideProgress + 0.045, 1.0);
+      if (state.slideProgress >= 1.0) {
+        state.rows.unshift(state.slideIn);
+        if (state.rows.length > 4) state.rows.pop();
+        state.slideIn = null;
+      }
+    }
+
+    // Panel dimensions
+    const panW  = Math.min(W * 0.88, 700);
+    const panH  = Math.min(H * 0.84, 530);
+    const panX  = (W - panW) / 2;
+    const panY  = (H - panH) / 2;
+    const PAD   = 16;
+
+    // Panel background
+    ctx.save();
+    roundRect(panX, panY, panW, panH, 12);
+    ctx.fillStyle   = '#0e1525';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth   = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    // Panel header bar
+    ctx.save();
+    roundRect(panX, panY, panW, 46, 12); // only top corners rounded naturally
+    // re-draw for flat bottom
+    ctx.beginPath();
+    ctx.moveTo(panX + 12, panY);
+    ctx.lineTo(panX + panW - 12, panY);
+    ctx.quadraticCurveTo(panX + panW, panY, panX + panW, panY + 12);
+    ctx.lineTo(panX + panW, panY + 46);
+    ctx.lineTo(panX, panY + 46);
+    ctx.lineTo(panX, panY + 12);
+    ctx.quadraticCurveTo(panX, panY, panX + 12, panY);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.fill();
+    ctx.restore();
+
+    // Header text
+    ctx.save();
+    ctx.fillStyle    = '#e2e8f0';
+    ctx.font         = "600 13px 'DM Sans', sans-serif";
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Bosch Procurement Dashboard', panX + PAD + 4, panY + 23);
+    ctx.restore();
+
+    // Live indicator (pulsing green dot)
+    const dotX = panX + panW - PAD - 4;
+    const dotY = panY + 23;
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 5 + 3 * Math.abs(Math.sin(state.pulsePhase)), 0, Math.PI * 2);
+    ctx.fillStyle = '#22c55e';
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#22c55e';
+    ctx.fill();
+    ctx.fillStyle    = '#22c55e';
+    ctx.font         = "11px 'JetBrains Mono', monospace";
+    ctx.textAlign    = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Live', dotX - 10, dotY);
+    ctx.restore();
+
+    // Horizontal rule under header
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.moveTo(panX, panY + 46);
+    ctx.lineTo(panX + panW, panY + 46);
+    ctx.stroke();
+    ctx.restore();
+
+    // ── Mini metric tiles ──
+    const tileCount = 4;
+    const tileGap   = 8;
+    const tileW     = (panW - PAD * 2 - tileGap * (tileCount - 1)) / tileCount;
+    const tileH     = 60;
+    const tileY     = panY + 56;
+    const tiles = [
+      { label: 'Total', value: '47', col: '#e2e8f0'  },
+      { label: 'Open',  value: '18', col: '#F59E0B'  },
+      { label: 'API',   value: '31', col: '#14b8a6'  },
+      { label: 'SFTP',  value: '16', col: '#818cf8'  }
+    ];
+    tiles.forEach((tile, i) => {
+      const tx = panX + PAD + i * (tileW + tileGap);
+      ctx.save();
+      roundRect(tx, tileY, tileW, tileH, 6);
+      ctx.fillStyle   = '#080d16';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth   = 1;
+      ctx.stroke();
+      ctx.fillStyle    = '#a1b0c7';
+      ctx.font         = "500 9px 'DM Sans', sans-serif";
+      ctx.textAlign    = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(tile.label.toUpperCase(), tx + 10, tileY + 10);
+      ctx.fillStyle    = tile.col;
+      ctx.font         = "600 22px 'JetBrains Mono', monospace";
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(tile.value, tx + 10, tileY + tileH - 12);
+      ctx.restore();
+    });
+
+    // ── Ticket table ──
+    const tableTop  = tileY + tileH + 14;
+    const rowH      = 36;
+    const colDefs   = [
+      { label: 'TICKET ID', x: panX + PAD + 4,  w: 72  },
+      { label: 'CUSTOMER',  x: panX + PAD + 80,  w: 100 },
+      { label: 'SUBJECT',   x: panX + PAD + 184, w: 255 },
+      { label: 'STATUS',    x: panX + PAD + 443, w: 74  },
+      { label: 'SOURCE',    x: panX + PAD + 521, w: 52  }
+    ];
+
+    // Table header row
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    roundRect(panX + PAD / 2, tableTop, panW - PAD, 26, 4);
+    ctx.fill();
+    colDefs.forEach(c => {
+      ctx.fillStyle    = '#6b7a94';
+      ctx.font         = "500 9px 'DM Sans', sans-serif";
+      ctx.textAlign    = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(c.label, c.x, tableTop + 13);
+    });
+    ctx.restore();
+
+    // Table rows — clip to table area so slide animation doesn't overflow
+    const rowAreaY = tableTop + 26;
+    const rowAreaH = rowH * 4 + 4;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(panX, rowAreaY, panW, rowAreaH);
+    ctx.clip();
+
+    // Easing for slide
+    const ease = state.slideIn
+      ? 1 - Math.pow(1 - state.slideProgress, 3)
+      : 0;
+
+    // Draw incoming ticket sliding in from top
+    if (state.slideIn) {
+      const newY = rowAreaY - rowH + rowH * ease;
+      drawTicketRow(state.slideIn, colDefs, newY, 0, rowH, state.slideProgress * 0.85 + 0.15);
+    }
+
+    // Draw existing rows (shift down during animation)
+    state.rows.slice(0, 4).forEach((ticket, i) => {
+      const baseY  = rowAreaY + i * rowH;
+      const offset = state.slideIn ? rowH * ease : 0;
+      drawTicketRow(ticket, colDefs, baseY + offset, i, rowH, 1);
+    });
+
+    ctx.restore(); // end clip
+
+    animFrameId = requestAnimationFrame(draw);
+  }
+  animFrameId = requestAnimationFrame(draw);
+}
+
+function drawTicketRow(ticket, cols, y, idx, rowH, opacity) {
+  ctx.save();
+  ctx.globalAlpha = opacity;
+
+  // Alternating row tint
+  if (idx % 2 === 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.02)';
+    ctx.fillRect(cols[0].x - 4, y + 1, cols[cols.length-1].x + cols[cols.length-1].w - cols[0].x + 8, rowH - 2);
+  }
+
+  ctx.textBaseline = 'middle';
+  const mid = y + rowH / 2;
+
+  // Ticket ID
+  ctx.fillStyle = '#818cf8';
+  ctx.font      = "500 11px 'JetBrains Mono', monospace";
+  ctx.textAlign = 'left';
+  ctx.fillText(ticket.id, cols[0].x, mid);
+
+  // Customer
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font      = "500 12px 'DM Sans', sans-serif";
+  ctx.fillText(ticket.customer, cols[1].x, mid);
+
+  // Subject (truncate)
+  const maxW  = cols[2].w - 8;
+  ctx.fillStyle = '#a1b0c7';
+  ctx.font      = "12px 'DM Sans', sans-serif";
+  let subj = ticket.subject;
+  // simple canvas text truncation
+  while (ctx.measureText(subj).width > maxW && subj.length > 4) {
+    subj = subj.slice(0, -4) + '...';
+  }
+  ctx.fillText(subj, cols[2].x, mid);
+
+  // Status badge
+  const statusPalette = { 'Open': '#F59E0B', 'In Review': '#818cf8', 'Closed': '#22c55e' };
+  const sc = statusPalette[ticket.status] || '#a1b0c7';
+  const sw = cols[3].w;
+  ctx.fillStyle = sc + '22';
+  roundRect(cols[3].x, mid - 10, sw, 20, 4);
+  ctx.fill();
+  ctx.fillStyle    = sc;
+  ctx.font         = "500 10px 'DM Sans', sans-serif";
+  ctx.textAlign    = 'center';
+  ctx.fillText(ticket.status, cols[3].x + sw / 2, mid);
+
+  // Source badge
+  const isApi = ticket.src === 'API';
+  const bc    = isApi ? '#22c55e' : '#F59E0B';
+  const bw    = cols[4].w;
+  ctx.fillStyle = bc + '22';
+  roundRect(cols[4].x, mid - 10, bw, 20, 4);
+  ctx.fill();
+  ctx.fillStyle = bc;
+  ctx.font      = "600 10px 'JetBrains Mono', monospace";
+  ctx.fillText(ticket.src, cols[4].x + bw / 2, mid);
+
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOOT — wait for fonts, then start
+═══════════════════════════════════════════════════════════ */
+document.fonts.ready.then(() => {
+  resizeCanvas();
+  navigateTo(0);
+});
+</script>
+</body>
+</html>
